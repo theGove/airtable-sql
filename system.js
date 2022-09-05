@@ -15,7 +15,7 @@ async function initialize_app(){
 function call(params){
 
     let fn=params.fn
-    console.log("calling", fn, "with", params)
+  //console.log("calling", fn, "with", params)
     if(typeof fn === "string"){
         fn=window[fn] // convert a string to function
     }
@@ -33,7 +33,7 @@ function build_menu(menu_data){
     for(const item of menu_data){
         add_menu_item(menu, item, user_data.roles)
     }
-    console.log('menu_data',menu_data)
+  //console.log('menu_data',menu_data)
     tag("menu").innerHTML=menu.join("")
 }
 //used to add a menu item
@@ -70,13 +70,13 @@ function add_menu_item(menu, menu_data, roles){
             if(typeof label!=="string"){
                 label=label()
             }
-            console.log(menu_data.params)
+          //console.log(menu_data.params)
             menu.push(`<div class="menu-item" onclick='call(${JSON.stringify(menu_data.params)})'>${label}</div>`)
         }else if(menu_data.label){
             menu.push(`<div class="menu-item">${menu_data.label}</div>`)
         }
         if(menu_data.panel){
-            console.log("at pantel", menu_data.panel)
+          //console.log("at pantel", menu_data.panel)
             menu.push(`<div  class="menu-panel" style="display:none" id="${menu_data.panel}">${call({fn:"initialize_panel",panel:menu_data.panel})}</div>`)
         }
     }
@@ -158,33 +158,33 @@ function message(parameters){
 
 }
 function modify_message(params){
-    console.log("message", params.message)
+  //console.log("message", params.message)
     const msg_body = params.message.parentElement
-    console.log("line--->", params.line)
+  //console.log("line--->", params.line)
     let msg_line
     if(params.line===undefined){
-        console.log("no line, we must be modifying the original text")
+      //console.log("no line, we must be modifying the original text")
         // we are appending a new line
         msg_line = params.message
     }else if(params.line==="new"){
-        console.log("line is new")
+      //console.log("line is new")
         // we are appending a new line
         msg_line = document.createElement("div");
         msg_line.className="msg-entry"
         msg_body.appendChild(msg_line);
     }else if(params.line==="first"){
         // we are dealing with the most recently added line
-        console.log("line is 'first'")
+      //console.log("line is 'first'")
         msg_line=msg_body.firstElementChild
     }else if(params.line==="last"){
         // we are dealing with the most recently added line
-        console.log("line is 'last'")
+      //console.log("line is 'last'")
         msg_line=msg_body.lastElementChild
-        console.log("msg_line",msg_line)
-        console.log("msg_line.data",msg_line.data)
+      //console.log("msg_line",msg_line)
+      //console.log("msg_line.data",msg_line.data)
     }else if(!isNaN(params.line)){
         // we have a line number, try to use it
-        console.log("line is a number")
+      //console.log("line is a number")
         msg_line = msg_body[params.line]
     }else{
         // not recognized, append
@@ -197,7 +197,7 @@ function modify_message(params){
 
     switch(params.action){
         case "append":
-            console.log("att append", params.text)
+          //console.log("att append", params.text)
             msg_line.innerHTML += params.text
             break
         case "prepend":

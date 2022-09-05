@@ -1,6 +1,8 @@
 //This global variable defines the first two navigation items in the menu. In this app there are only two main navigation items "Home" and "Locations". These two menu items are visible regardless of login status.  
 const empty_box = '<span class="material-symbols-outlined md-18 middle blink">check_box_outline_blank</span>'
 const checked_box = '<span class="material-symbols-outlined md-18 middle">check_box</span>'
+let tables_remaining=0
+let schema=""
 let db = null
 const airtable = require('airtable');
 const session={
@@ -18,20 +20,46 @@ const main_menu=[
     {panel:"connections-panel"},
     //this empty object inserts a horizontal line in the navigation menu panel
     {},
-    //The unauthenticated user is also presented with the "Login" and "Recover password" menu options.
-    {label:"Open Session",params:{fn:'toggle_panel',panel:'open-session-panel'},panel:"open-session-panel"},
-    {label:"Connect",params:{fn:'toggle_panel',panel:'unauthenticated-connection-panel'},panel:"unauthenticated-connection-panel"},
+    {label:"Connection",id:"connection-menu", menu:[
+        {label:"Open Session",params:{fn:'toggle_panel',panel:'open-session-panel'},panel:"open-session-panel"},
+        {label:"Connect",params:{fn:'toggle_panel',panel:'unauthenticated-connection-panel'},panel:"unauthenticated-connection-panel"},
+        {label:"Copy Metadata Script",params:{fn:'copy_metadata_script'}},
+    ]},
+    {label:"Diagram",id:"diagram-menu", menu:[
+        {label:"Copy Diagram Script",params:{fn:'copy_diagram'}},
+        {label:"Open dbdiagram.io",params:{fn:'open_diagram'}},
+    ]},
     {},
     {label:"Reset App",params:{fn:'reset_app'}},    
 ]
 
+function copy_diagram(){
+  if(schema){
+    copyToClipboard(schema)
+    message({
+        title:"Diagram Copied",
+        message:`You diagram script has been copied. Now open <a href="https://dbdiagram.io/d" target="_blank">dbdiagram.io</a> and paste it over the sample script on the left side of the page.`,
+        seconds:8
+    })
+  }else{
+    message({
+        title:"No Diagram",
+        message:"Connect to a base to be able to load a diaram script",
+        kind:"error",
+        seconds:4
+    })
+
+  }
+}
+function open_diagram(){
+    window.open("https://dbdiagram.io/d", "_blank");
+}
 function start(){
     //tag("api-key").innerHTML = `<input type="text" id="api_key" onchange="call({fn:'update_param',value:this.value})">`
     call({fn:"initialize_sql_engine"})
-    editor_init
 
-}
-function reset_app(){
+
+}function reset_app(){
     location.reload();    
 }
 
@@ -40,7 +68,7 @@ function query(params){
     stmt.bind();
     while(stmt.step()) { //
       const row = stmt.getAsObject();
-      console.log('Here is a row: ' + JSON.stringify(row));
+    //console.log('Here is a row: ' + JSON.stringify(row));
     }
 
 }
@@ -67,7 +95,7 @@ function initialize_sql_engine(){
       stmt.bind({$start:1, $end:2});
       while(stmt.step()) { //
         const row = stmt.getAsObject();
-        console.log('Here is a row: ' + JSON.stringify(row));
+      //console.log('Here is a row: ' + JSON.stringify(row));
       }
 
 
@@ -125,38 +153,38 @@ function toggle_password(params){
 
 
 function show_home(params){
-    console.log ("showing home", params)
+  //console.log ("showing home", params)
 
 
     //db.run('INSERT INTO employee(first_name,last_name) VALUES(?, ?)', ['randall','boggs'])
 
              // Prepare a statement
       const sql=tag("sql").value
-      console.log("sql",sql)
+    //console.log("sql",sql)
       const stmt = db.prepare(sql);
 
       // Bind new values
       stmt.bind();
       while(stmt.step()) { //
         const row = stmt.getAsObject();
-        console.log('Here is a row: ' + JSON.stringify(row));
+      //console.log('Here is a row: ' + JSON.stringify(row));
       }
         
 
 }
 
 function toggle_panel(params){
-    console.log ("toggle_panel", params)
+  //console.log ("toggle_panel", params)
     toggle(params.panel)
 }
 
 
 function update_param(params){
-    console.log("at update param", params)
+  //console.log("at update param", params)
 }
 
 function create_session(params){
-    console.log("creating session", params)
+  //console.log("creating session", params)
     // get the cookie that holds all the sessions
     if(params.key.length===0){
         message({
@@ -225,11 +253,11 @@ async function open_connection(params){
     const base = new airtable({ apiKey: api_key }).base(base_id);
     base('metadata').select({maxRecords:1}).eachPage(function page(records, fetchNextPage) {
         records.forEach(function(record) {
-            console.log('Retrieved ', record.get('id'), record);
+          //console.log('Retrieved ', record.get('id'), record);
         });
         fetchNextPage();
     }, function done(e) {
-        console.log("e",e)
+      //console.log("e",e)
         if( e && e.error){
             airtable_error(e)
         }else{
@@ -242,7 +270,7 @@ async function open_connection(params){
                     title:"Connection",
                     seconds:4
                 })
-                console.log("About to append connection")
+              //console.log("About to append connection")
                 append_connection(params)   
                 save_session()             
             }else{
@@ -303,7 +331,7 @@ function build_connections(params){
   }
   
   function save_session(params){
-    console.log("session", session)
+  //console.log("session", session)
     if(session.data){
       const sessions=JSON.parse(get_cookie("sessions"))
       sessions[session.location]=CryptoJS.AES.encrypt(JSON.stringify(session.data), "Secret Passphrase").toString()
@@ -330,7 +358,7 @@ function open_session(params){
     //console.log(sessions.length)
     let success=false
     for(let i=0; i<sessions.length; i++){
-        console.log(sessions[i],params.key.trim())
+      //console.log(sessions[i],params.key.trim())
         try{
             
             session.data=JSON.parse(CryptoJS.AES.decrypt(sessions[i], params.key.trim()).toString(CryptoJS.enc.Utf8))
@@ -350,7 +378,7 @@ function open_session(params){
         build_connections()
 
     }else{
-        console.log("No session found with this key")
+      //console.log("No session found with this key")
     
         tag('session-create-row').style.display=""
         tag('session-open-row').style.display="none"
@@ -360,9 +388,9 @@ function open_session(params){
 }
 
 async function activate_connection(params){
-    console.log("session",session)
-    console.log("connection",connection)
-    console.log("params",params)
+  //console.log("session",session)
+  //console.log("connection",connection)
+  //console.log("params",params)
     let msg // object to refer to the status message
     if(params.number!==undefined){// this is a connection from the current session
         msg=message({
@@ -370,9 +398,9 @@ async function activate_connection(params){
             message:"Establishing connection . . .",
             //seconds:4
         })
-        console.log ("-------------- msg ----------------------")
-        console.log (msg )
-        console.log("session.data[params.number].key",session.data[params.number].key)
+      //console.log ("-------------- msg ----------------------")
+      //console.log (msg )
+      //console.log("session.data[params.number].key",session.data[params.number].key)
         connection.key=session.data[params.number].key
         connection.id=session.data[params.number].id
     }else{ // this is an unnamed connection
@@ -381,8 +409,8 @@ async function activate_connection(params){
             message:`${empty_box}Connecting`,
             //seconds:4
         })
-        console.log ("-------------- msg ----------------------")
-        console.log (msg )
+      //console.log ("-------------- msg ----------------------")
+      //console.log (msg )
         connection.key=params.key
         connection.id=params.id
     }
@@ -398,7 +426,7 @@ async function activate_connection(params){
             })
 
             records.forEach(function(record) {
-                console.log('Retrieved ', record.get('id'), record);
+              //console.log('Retrieved ', record.get('id'), record);
                 if(record.get("select")){
                     if(!all_tables[record.get("table_id")]){
                         all_tables[record.get("table_id")]={
@@ -426,7 +454,7 @@ async function activate_connection(params){
             fetchNextPage();
 
         }, async function done(e) {
-            console.log("e",e)
+          //console.log("e",e)
             if( e && e.error){
                 airtable_error(e)
             }else{
@@ -454,7 +482,7 @@ async function activate_connection(params){
             }
 
 
-            console.log("all_tables",all_tables)
+          //console.log("all_tables",all_tables)
             // analyze required columns and table structure
             const links={}
 
@@ -467,7 +495,8 @@ async function activate_connection(params){
                         const options=JSON.parse(field.options)
                        // console.log(options)
                         if(options.linkedTableId){
-                           // console.log(field.name,"reference", all_tables[options.linkedTableId].name, options.prefersSingleRecordLink ? 1 : "*" )
+                            //console.log("$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$", links)
+                            //console.log(field.name,"reference", all_tables[options.linkedTableId].name, options.prefersSingleRecordLink ? 1 : "*" )
                             links[field.id]={}
                             links[field.id].array=[table_name,field.name,"references", options.prefersSingleRecordLink ? 'one' : "many", all_tables[options.linkedTableId].name,options.inverseLinkFieldId]
                             links[field.id].card_1=options.prefersSingleRecordLink ? 1 : "*"
@@ -481,8 +510,16 @@ async function activate_connection(params){
                }
             }
             // at this point each entry has only half of the association, need to make the other half
+          //console.log("links",links)
             for(let l=0;l<Object.values(links).length;l++){
-                Object.values(links)[l].card_2 =links[Object.values(links)[l].references].card_1
+              //console.log("key", Object.keys(links)[l])
+                if(links[Object.values(links)[l].references]){
+                    // binary relationship
+                    Object.values(links)[l].card_2 =links[Object.values(links)[l].references].card_1
+                }else{
+                    //unary relationship (self reference)
+                    Object.values(links)[l].card_2 = "*"
+                }
             }
 
 
@@ -490,7 +527,12 @@ async function activate_connection(params){
             // now each link knows about both halves of the relationship, through out the many side of all one to many relationships
             const dead_fields=[]
             for(const [field_id, link] of Object.entries(links)){
-                if(link.card_1==="*" && link.card_2===1){
+                if(link.card_1===1 && link.card_2==="*"){
+                    // found the one side of a one-to-many relationship.  mark it as a foriegn key
+                  //console.log(field_id, link,"------------------------------------------------------------------------------")
+                    //console.log(all_tables[link.table].fields[all_tables[link.table].index[field_id]])
+                    all_tables[link.table_1].fields[all_tables[link.table_1].index[field_id]].references=all_tables[link.table_2].name
+                }else if(link.card_1==="*" && link.card_2===1){
                     // found the many side of a one-to-many relationship.  mark it for exclusion
                     //console.log(field_id, link)
                     //console.log(all_tables[link.table].fields[all_tables[link.table].index[field_id]])
@@ -523,32 +565,32 @@ async function activate_connection(params){
                     // link info has been moved to the many2many array, delete it from the base tables
                     //dead_fields.push({table:link.table_1,field:all_tables[link.table_1].index[field_id]})
                     //all_tables[link.table_1].fields[all_tables[link.table_1].index[field_id]]=null
-                    console.log(tables, field_id, link.references)
+                  //console.log(tables, field_id, link.references)
                 }
             }
-            console.log("dead_fields",dead_fields)
+          //console.log("dead_fields",dead_fields)
 
             // mark fields to be used for many-to-many associations
-            console.log("many2many",many2many)
-            console.log(Object.entries(many2many))
+          //console.log("many2many",many2many)
+          //console.log(Object.entries(many2many))
             for(const [name,relationship] of Object.entries(many2many)){
-                console.log("===================================")
-                console.log(name, relationship, Object.values(relationship.links).length)
+              //console.log("===================================")
+              //console.log(name, relationship, Object.values(relationship.links).length)
                 if(Object.values(relationship.links).length===1){
                     const data=Object.keys(relationship.links)[0].split("-")
-                    console.log("found a simple many-to-many relationship", data)
+                  //console.log("found a simple many-to-many relationship", data)
                     // field to keep
                     const keep = all_tables[data[0]].fields[all_tables[data[0]].index[data[1]]]
                     all_tables[data[0]].fields[all_tables[data[0]].index[data[1]]] = {table:name, name:keep.name, col1:all_tables[data[0]].name+"_id", col2:all_tables[data[2]].name+"_id"}
                     // field to forget
-                    console.log(' forget it', all_tables[data[2]].fields[all_tables[data[2]].index[data[3]]])
+                  //console.log(' forget it', all_tables[data[2]].fields[all_tables[data[2]].index[data[3]]])
                     all_tables[data[2]].fields[all_tables[data[2]].index[data[3]]] = {}
                 }else{
                     // we have a multiple many-to-many relationship between the same two tables.  process them all.
-                    console.log("relationship",relationship.links)
+                  //console.log("relationship",relationship.links)
                     for(const [key,names] of Object.entries(relationship.links)){
                         //table name cannot just be the composite of the two tables.  pick the shorter table
-                        console.log("relationship.links",key, names)
+                      //console.log("relationship.links",key, names)
                         const data=key.split("-")
                         if(names.name1.length > names.name2.length){
                             const keep=all_tables[data[0]].fields[all_tables[data[0]].index[data[1]]]
@@ -577,35 +619,36 @@ async function activate_connection(params){
 
             
 
-            console.log("many2many",many2many)
-            console.log("links",links)
-            console.log("all_tables edited",all_tables)
+          //console.log("many2many",many2many)
+          //console.log("links",links)
+          //console.log("all_tables edited",all_tables)
+
+            
+            const diagram=[] // create DBML script for diagram
+            for(const [key,val]of Object.entries(all_tables)){
+                diagram.push(diagram_table({table:val.name, fields:val.fields}))
+            }
+            schema=diagram.join("\n")
 
             // create and populate tables
             for(const [key,val]of Object.entries(all_tables)){
-                console.log(key,val.fields)
+              //console.log(key,val.fields)
                 const msg_line=modify_message({
                     message:msg,
                     text:empty_box + val.name,
                     line: "new"
                 })
-
-                await create_table({table:val.name, fields:val.fields, base:base, msg:msg_line})
-
+                tables_remaining++
+                create_table({table:val.name, fields:val.fields, base:base, msg:msg_line})
                 //break
             }
-            
             
 
 
 
         }
-
     });
-        
-        //airtable_error({error:"METADATA_NOT_FOUND"})
-
-
+    //airtable_error({error:"METADATA_NOT_FOUND"})
     hide_menu()
 
 }
@@ -613,11 +656,40 @@ async function activate_connection(params){
 
 
 
+function diagram_table(params){
+//console.log("params",params)
+ //console.log(params.table,params.fields)
+   
+   const many={}
+  
+    const dbml=[`Table "${params.table}"{\n  "${params.table}_id" " "`]
+    for(const field of params.fields){
+        if(field.table){// this is the name of the table to hold the relationship
+            many[field.name]={
+                table:field.table,
+                field_names:[field.col1, field.col2]
+            }
+            dbml.unshift(`Table "${field.table}"{\n  "${field.col1}" " " [ref: > "${field.col1.slice(0, -3)}"."${field.col1}" ]\n  "${field.col2}" " " [ref: > "${field.col2.slice(0, -3)}"."${field.col2}" ]\n}`)
+        }else if(field.id){// fileds that have been made null are ignored
+            let references_clause=""
+            if (field.references){
+                references_clause=` [ref: > "${field.references}"."${field.references}_id"]`
+            }
+            dbml.push(`  "${field.name}" " " ${references_clause}`)
+        }
+    }
+    dbml.push("}")
+    return dbml.join("\n")
+      
+  
+}
 
-async function create_table(params){
-    console.log("params",params)
-   console.log(params.table,params.fields)
-    const many={}
+
+function create_table(params){
+  //console.log("params",params)
+ //console.log(params.table,params.fields)
+   
+   const many={}
     // loop across the fields to find the one that have many-to-many data
 
 
@@ -644,17 +716,14 @@ async function create_table(params){
                 field_names:[field.col1, field.col2]
             }
 
-
             db.run("begin transaction")
             db.run(`drop table if exists "${field.table}"`)
             db.run(`create table "${field.table}" ("${field.col1}" float, "${field.col2}" float)`)
-        
             db.run("commit")//creating table
 
 
-
         }else if(field.id){// fileds that have been made null are ignored
-            field_names.push(field.name)
+            field_names.push(`"${field.name}"`)
             q.push("?")
             fields.push(`"${field.name}" float`)
         }
@@ -665,9 +734,8 @@ async function create_table(params){
       //console.log(create_table.join(""))
       db.run("begin transaction")
       db.run(`drop table if exists "${params.table}"`)
-      console.log(create_table.join(""))
+    //console.log(create_table.join(""))
       db.run(create_table.join(""))
-  
       db.run("commit")//creating table
 
       params.base(params.table).select().eachPage(function page(records, fetchNextPage) {
@@ -684,22 +752,29 @@ async function create_table(params){
                         //console.log("data",data)
                         //console.log("field.name",field.name)
                         //console.log("values", record.fields[field.name])
-                        const sql=`INSERT INTO "${data.table}"(${data.field_names.join(",")}) VALUES (?, ?)`
+                        const sql=`INSERT INTO "${data.table}"("${data.field_names.join('","')}") VALUES (?, ?)`
                         for(const val of record.fields[field.name]){
                             const one_row=[record.id,val]
-                            console.log("sql", sql, one_row)
+                            //if(data.table==="Store"||data.table==="Container"||data.table==="Inventory Item"){
+                               // console.log(data.table, "sql", sql, one_row)
+                            //}
                             db.run(sql, one_row);
-                            console.log("success")
+                          //console.log("success")
                         }
                         
     
                     }
                 }else if(field.id){// null fields are ignored
                     let val=record.fields[field.name]
-                    if(val===undefined){val=""}
+                    if(val===undefined){
+                        val=""
+                    }else if(field.type==="dateTime"){
+                        val=val.replace("T", " ").replace("Z", "")
+                    }
+                    
                     one_row.push(val)
                     // q.push("?")
-                //    console.log("one_row", one_row)
+                //  //console.log("one_row", one_row)
                 }
 
             }
@@ -713,26 +788,185 @@ async function create_table(params){
         });
         fetchNextPage();
 
-    }, async function done(e) {
-      
-    //   for(let x=1;x<ranges[0].values.length;x++){
-    //     const one_row=[]
-    //     for(let r=0;r<ranges.length;r++){
-    //       const range = ranges[r]
-    //       one_row.push(fixNull(range.values[x].shift()))
-    //     }
-    //     db.run(`INSERT INTO "${table_name}" VALUES (${q.join(",")})`, one_row);
-        
-    //   }
-        console.log("done with ", params.table)
+    }, function done(e) {      
+      //console.log("done with ", params.table)
         modify_message({
             message:params.msg,
             text:checked_box + params.table,
             close_line_in:5
         })
-
+        tables_remaining--
+        check_for_done({msg:params.msg})
+        
     })
       
-  //  });
-    //return ret_obj
+  }
+
+  function check_for_done(params){
+    if(!tables_remaining){
+        modify_message({
+            line:"new",
+            message:params.msg,
+            text:"Success.",
+            close_message_in:5
+        })
+    }
+  }
+
+  function copy_metadata_script(){
+    copyToClipboard(`/*
+    This script builds a table called "metadata" that holds 
+    information about each field in each table of the base.
+
+    If a table by that name already exists, the script checks
+    its metadata to see if it was created by this script.  If
+    so, it overwrites the data; if not, it alerts the user to
+    rename or delete the other table and try again.
+*/    
+const unselected={} // used to remember which metadata records have been maked for selection on a table re-build
+const structure={
+    name:"metadata",
+    fields:[
+        {name:"id",type:"singleLineText",desc:"Combination if the table name and the field name"},
+        {name:"table_id",type:"singleLineText",desc:"The internal Airtable identifier for the table in this base (" + base.id + ")"},
+        {name:"table_name",type:"singleLineText",desc:"The user-readable name of the table"},
+        {name:"field_id",type:"singleLineText",desc:"The internal Airtable identifier for the field"},
+        {name:"field_name",type:"singleLineText",desc:"The user-readable name of the field"},
+        {name:"field_description",type:"singleLineText",desc:"The short-text description of the field"},
+        {name:"field_type",type:"singleLineText",desc:"The field's data type"},
+        {name:"field_value_limits",type:"singleLineText",desc:"Various options that describe how field accepts data"},
+        {name:"field_options",type:"singleLineText",desc:"All options of the field"},
+        {name:"sequence",type:"number",desc:"The position of a field in the table",options:{precision:0}},
+        {name:"select",type:"checkbox",desc:"Use this column to mark which entries are relevant for a particular operation that consumes the information in this metadata table",options:{icon:"check",color:'blueBright'}},
+    ]
+}
+
+output.markdown('#### Collecting metadata from this base.');
+let proceed=true
+let metadata_exists = false
+let table
+for (table of base.tables) {
+    if(table.name==="metadata"){
+        metadata_exists = true
+        break
+    }
+}
+
+if(metadata_exists){
+    // check to see if the metadata table looks like one created by this script
+    let table = base.getTable("metadata")
+    const fields=table.fields
+    for(let x=0;x<fields.length;x++){
+        if(!(fields[x].name===structure.fields[x].name && fields[x].description===structure.fields[x].desc)){
+            output.markdown('This base already has a table named "metadata" and it looks as though it was not created by this script.  Please rename (or delete) that table and try again.');
+            proceed=false
+            break
+        }
+    }
+    if(proceed){
+        // The table already exists and we are OK to reuse it.  Let's remember the status of the "select" column
+        let query = await table.selectRecordsAsync({fields: ["id","field_id","select"]});
+        let filteredRecords = query.records.filter(rec => {
+            const unchecked=!rec.getCellValue('select')
+            if(unchecked){
+                unselected[rec.getCellValue('field_id')]=true
+            }
+            return unchecked
+        })
+        
+        //Let's delete the existing data
+        output.markdown("Removing existing metadata information.");
+        
+        query = await table.selectRecordsAsync({fields: []});
+        let records = query.records
+        let batchMax = 50
+        while (records.length > 0) {
+            await table.deleteRecordsAsync(records.slice(0, batchMax))
+            records = records.slice(batchMax)
+        }
+    }
+}else{
+    // the table does not yet exist, let's build it
+    output.markdown("Building table **metadata**")
+    const columns=[]
+    for(const field of structure.fields){
+        const col={
+            name:field.name,
+            type:field.type,
+            description:field.desc
+        }
+        if(field.options){
+            col.options=field.options
+        }
+        columns.push(col)
+    }
+    await base.createTableAsync("metadata", columns)
+}
+
+if(proceed){
+    const metadata=base.getTable("metadata")   
+    const results = await metadata.selectRecordsAsync();
+    // filter out the metadata table from our search
+    const tables = base.tables.filter((t) => {
+      return t.id !== metadata.id;
+    });
+    // create a array to hold records to create
+    var creates = [];
+    // iterate through each table
+    for (let t of tables) {
+        let sequence=1
+        output.markdown('Processing **' + t.name + "**");
+        let fields = t.fields;
+        for (let f of fields) {
+            let options = ""
+            if(f.options){options=JSON.stringify(f.options)}
+            let payload = {
+                fields: {
+                    [structure.fields[0].name]: "["+t.name + "].[" + f.name+"]",
+                    [structure.fields[1].name]: t.id,
+                    [structure.fields[2].name]: t.name,
+                    [structure.fields[3].name]: f.id,
+                    [structure.fields[4].name]: f.name,
+                    [structure.fields[5].name]: f.description,
+                    [structure.fields[6].name]: f.type,
+                    [structure.fields[7].name]: getFieldOptions(f),
+                    [structure.fields[8].name]: options,
+                    [structure.fields[9].name]: sequence++,
+                    [structure.fields[10].name]: !unselected[f.id],
+                },
+            };
+            creates.push(payload);
+        }
+    }
+
+    while (creates.length > 0) {
+        await metadata.createRecordsAsync(creates.slice(0, 50));
+        creates = creates.slice(50);
+    }
+    output.markdown('**Done.**  Detailed information about the columns in each of your tables can be found in the table named "metadata"');
+}
+
+// some fields have more data about them than others
+// we can use this function to extract that information
+// right now, this only pulls in single/multi select options and the table that a linked record links to
+// but it could be expanded to also include details about formulas and other computed fields
+function getFieldOptions(field) {
+
+if (field.type === "singleSelect" || field.type === "multipleSelects") {
+return field.options.choices
+  .map((i) => {
+    return i.name;
+  })
+  .join(", ");
+} else if (field.type === "multipleRecordLinks") {
+return "references " + base.getTable(field.options.linkedTableId).name;
+}
+return null;
+}`)
+console.log("connection",connection)
+message({
+    title:"Script Copied",
+    message:`You metadata script has been copied. Now open <a href="https://airtable.com/${connection.key||""}" target="_blank">airtable.com</a> and run the scrip using the Scripting Extension".`,
+    seconds:10
+})
   }

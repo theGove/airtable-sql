@@ -8,7 +8,7 @@ async function execute() {
         try{
             const sql=editor.getSession().getValue()
             console.log("sql",sql)
-            const stmt = db.prepare(sql);
+            let stmt = db.prepare(sql);
 
             const table=['<table class="result" style="border-spacing: 0;"><thead><tr>']
 
@@ -16,17 +16,24 @@ async function execute() {
 
             // Bind new values
             stmt.bind();
-            const columns = stmt.getColumnNames()
+            console.log("stmt", stmt)
+            let columns = stmt.getColumnNames()
+            
+            if(columns.length===0){
+                // this was an action query
+                stmt.step()
+                stmt = db.prepare('select changes() as "Records_affected"')
+                stmt.bind();
+                columns = stmt.getColumnNames()
+            }
+
             for(const col of columns){
                 table.push("<th>"+col+"</th>")
             }
             table.push("</tr></thead><tbody>")
-
-
-
             while(stmt.step()) { //
                 const row = stmt.getAsObject()
-
+                
                 const tr=["<tr>"]
                 for(col of columns){
                     if(row[col]){
@@ -39,14 +46,17 @@ async function execute() {
                 table.push(tr.join(""))
 
 
-  
+
                 //console.log('Here is a row: ' + JSON.stringify(row))
             }
-
-           //console.log("columns",columns)
+                        //console.log("columns",columns)
             table.push("</tr></tbody></table>")
-           //console.log(table.join(""))
+            //console.log(table.join(""))
             result.innerHTML=table.join("")
+
+
+
+
 
         }catch(e){
             message({
