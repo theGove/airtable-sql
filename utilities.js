@@ -108,7 +108,7 @@ function form_data(html_tag,spin){log(2,arguments,filename,form_data)
     return payload
 }
 
-function url_parameters(){log(1,arguments,filename,url_parameters)
+function url_parameters(){
     if(!location.search){
         return {fn:"show_home"}  
     }else if(location.search.includes("=")){
@@ -128,7 +128,14 @@ function url_parameters(){log(1,arguments,filename,url_parameters)
     }
 }
 
-function set_cookie(name,value,days) {log(2,arguments,filename,set_cookie)
+function open_url(params) {
+    window.open(params.url, '_blank');
+}
+function focus(params) {
+    tag(params.id).focus()
+}
+
+function set_cookie(name,value,days) {
     //used to update cookie information
     var expires = "";
     if (days) {
@@ -139,7 +146,7 @@ function set_cookie(name,value,days) {log(2,arguments,filename,set_cookie)
     document.cookie = name + "=" + (value || "")  + expires + "; path=/";
 }
 
-function get_cookie(name) {log(2,arguments,filename,get_cookie)
+function get_cookie(name) {
     //used to retrieve cookie by name
     var nameEQ = name + "=";
     var ca = document.cookie.split(';');
@@ -151,19 +158,19 @@ function get_cookie(name) {log(2,arguments,filename,get_cookie)
     return null;
 }
 
-function erase_cookie(name) {log(2,arguments,filename,erase_cookie)
+function erase_cookie(name) {
     //used to delete a cookie by name
     //console.log("at erase cookie", name)
     set_cookie(name,"deleted",-2)
     //document.cookie = name+'=; Max-Age=-99999999;';  
 }
 
-function tag(id){log(1,arguments,filename,tag)
+function tag(id){
     //Adds an ID to an HTML element
     return document.getElementById(id)
 }
 
-function toggle(tag_or_id,display="block"){log(2,arguments,filename,toggle)
+function toggle(tag_or_id,display="block"){
     
     
     let element=tag_or_id
@@ -179,11 +186,19 @@ function toggle(tag_or_id,display="block"){log(2,arguments,filename,toggle)
         return false
     }else{
         element.style.display=display
+        // look for something to focus on
+        for (const elem of element.getElementsByTagName("input")){
+            if(elem.type.toLowerCase()==="text"){
+                elem.focus()
+                break
+            }
+        }
+        
         return true
     }
 }
 
-function intersect(string_or_array, array_or_string) {log(2,arguments,filename, intersect)
+function intersect(string_or_array, array_or_string) {
     // returns the intersection of two arrays
     if(Array.isArray(string_or_array)){
       var a=string_or_array
@@ -201,7 +216,7 @@ function intersect(string_or_array, array_or_string) {log(2,arguments,filename, 
     return [...new Set(a)].filter(x => setB.has(x));
 }
 
-function is_valid_email(email){log(2,arguments,filename,is_valid_email)
+function is_valid_email(email){
     // returns true if true if email is in form:
     // anystring@anystring.anystring
     var re = /\S+@\S+\.\S+/;

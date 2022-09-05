@@ -2,7 +2,7 @@ html {zoom: 100%;}
 
 body{
     padding:0;
-    background-color: ivory;
+    background-color: #eee;
     text-align: left;
     min-width: 200px;
 }
@@ -124,3 +124,6 @@ th{
 }
 
 
+.middle{
+    vertical-align: middle;
+}
